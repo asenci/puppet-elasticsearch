@@ -58,21 +58,21 @@ class elasticsearch::config {
 
     # Defaults file, either from file source or from hash to augeas commands
     if ($elasticsearch::init_defaults_file != undef) {
-      file { "${elasticsearch::defaults_location}/elasticsearch":
+      file { "${elasticsearch::defaults_location}/${elasticsearch::service_name}":
         ensure => $elasticsearch::ensure,
         source => $elasticsearch::init_defaults_file,
         owner  => 'root',
         group  => $elasticsearch::elasticsearch_group,
         mode   => '0660',
-        before => Service['elasticsearch'],
+        before => Service[$elasticsearch::service_name],
         notify => $elasticsearch::_notify_service,
       }
     } else {
-      augeas { "${elasticsearch::defaults_location}/elasticsearch":
-        incl    => "${elasticsearch::defaults_location}/elasticsearch",
+      augeas { "${elasticsearch::defaults_location}/${elasticsearch::service_name}":
+        incl    => "${elasticsearch::defaults_location}/${elasticsearch::service_name}",
         lens    => 'Shellvars.lns',
         changes => template("${module_name}/etc/sysconfig/defaults.erb"),
-        before  => Service['elasticsearch'],
+        before  => Service[$elasticsearch::service_name],
         notify  => $elasticsearch::_notify_service,
       }
     }
@@ -87,7 +87,7 @@ class elasticsearch::config {
       }
 
       if ($elasticsearch::keystore_path == undef) {
-        $_keystore_path = "${elasticsearch::configdir}/elasticsearch.ks"
+        $_keystore_path = "${elasticsearch::configdir}/${elasticsearch::service_name}.ks"
       } else {
         $_keystore_path = $elasticsearch::keystore_path
       }
@@ -164,11 +164,11 @@ class elasticsearch::config {
     )
 
     datacat_fragment { 'main_config':
-      target => "${elasticsearch::configdir}/elasticsearch.yml",
+      target => "${elasticsearch::configdir}/${elasticsearch::service_name}.yml",
       data   => $_es_config,
     }
 
-    datacat { "${elasticsearch::configdir}/elasticsearch.yml":
+    datacat { "${elasticsearch::configdir}/${elasticsearch::service_name}.yml":
       template => "${module_name}/etc/elasticsearch/elasticsearch.yml.erb",
       notify   => $elasticsearch::_notify_service,
       require  => Class['elasticsearch::package'],
@@ -229,9 +229,9 @@ class elasticsearch::config {
       backup => false,
     }
 
-    file { "${elasticsearch::defaults_location}/elasticsearch":
+    file { "${elasticsearch::defaults_location}/${elasticsearch::service_name}":
       ensure    => 'absent',
-      subscribe => Service['elasticsearch'],
+      subscribe => Service[$elasticsearch::service_name],
     }
   }
 }
